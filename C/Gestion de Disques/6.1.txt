@@ -1,0 +1,72 @@
+
+
+
+Exercice 6.1
+
+Données :
+- 2 plateaux
+- 2 faces par plateau → 4 faces
+- 1000 cylindres
+- 60 secteurs
+- 1024 octets par secteur
+
+a) Capacité totale : 
+
+Capacité = plateaux × faces × cylindres × secteurs × taille secteur
+         = 2 × 2 × 1000 × 60 × 1024
+         = 245 760 000 octets ≈ 245 Mo
+
+b) Position d’un octet:  
+
+Formule :
+position = (face × nb_cyl × nb_sec + cylindre × nb_sec + secteur) × taille + offset
+
+Exemple :
+face = 2
+cylindre = 350
+secteur = 45
+offset = 300
+
+Nombre total de secteur  par face : 
+1000 × 60 = 60000
+Calcul global : 
+position = (2 × 60000 + 350 × 60 + 45) × 1024 + 300
+
+
+= (120000 + 21000 + 45) × 1024 + 300
+= 141045 × 1024 + 300
+= 144430080 + 300
+= 144430380
+
+Position = 144 430 380
+
+c) Retrouver secteur depuis un octet : 
+
+Secteur global : 
+78000000 / 1024 ≈ 76171
+
+Reste : 
+78000000 % 1024 = 896
+
+face : 
+
+secteurs par face = 1000 × 60 = 60000
+face = 76171 / 60000 = 1
+
+76171 - 60000 = 16171
+
+Cylindre : 
+cylindre = 16171 / 60 = 269
+
+reste 16171 % 60 = 31
+
+Secteur : 
+secteur = 31
+
+
+Face = 1
+Cylindre = 269
+Secteur = 31
+Offset = 896
+
+
