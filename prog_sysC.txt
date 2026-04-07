@@ -1,0 +1,2230 @@
+Exercice 2 : processus
+Exercices 2.1 : 
+#include <stdio.h>  
+#include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+
+int main() 
+{
+    pid_t pid = fork();
+
+    if(pid == -1)
+    {
+        perror("Erreur de creation du processus ");
+        exit(1);
+    }
+    else if (pid == 0) 
+    {
+        printf("Je suis le fils \n");
+    } 
+    else 
+    {
+        printf("Je suis le père \n");
+    }
+
+    return 0;
+}
+
+Exercice 2.2 : 
+#include <stdio.h>
+#include <unistd.h>
+
+int main() 
+{
+    pid_t pid1 = fork();
+
+    if (pid1 == 0) 
+    {
+        printf("Je suis le fils 1 \n");
+    } 
+    else 
+    {
+        pid_t pid2 = fork();
+        if (pid2 == 0) 
+        {
+            printf("Je suis le fils 2 \n");
+        } 
+        else {
+            printf("Je suis le père \n");
+        }
+    }
+    return 0;
+}
+
+Exercice 2.3 : 
+include <stdio.h>  
+#include <unistd.h>
+
+int main()
+{
+    pid_t pid;
+    
+    for(int i = 0 ; i < 5 ; i++)
+    {
+        pid = fork();
+
+        if(pid == 0)
+        {
+            printf("Je suis le fils %d\n", i+1);
+            break; 
+        }       
+    }
+
+    return 0;
+}
+
+
+Exercice 2.4 : 
+#include <stdio.h>
+#include <unistd.h>
+
+int num = 0;
+
+int main() 
+{
+    for (int i = 1; i <= 5; i++) 
+    {
+        pid_t pid = fork();
+
+        if (pid == 0) 
+        {
+            num = i;
+            printf("Je suis le fils %d\n", num);
+            break;
+        }
+    }
+    return 0;
+}
+
+Exercice 2.5: 
+#include <stdio.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+
+int main()
+{
+    pid_t pid_1, pid_2;   
+    time_t debut, fin;    // Variables pour mesurer le temps total
+
+    debut = time(NULL);   // Début du programme
+
+    // Création du premier fils
+    pid_1 = fork();
+
+    if(pid_1 == 0)
+    {
+        // Code exécuté uniquement par le FILS 1
+        srand(getpid()); // important : seed différent pour chaque fils
+        int t = rand() % 10 + 1; // Temps aléatoire entre 1 et 10
+        printf("Fils 1 dort pendant %d secondes\n", t);
+        sleep(t); // Le fils dort 
+        printf("Fils 1 terminé\n");
+        exit(0); //empêche ce fils de continuer le programme
+    }
+    else
+    {
+        // Code exécuté uniquement par le PÈRE
+
+        // Création du deuxième fils
+        pid_2 = fork();
+
+        if(pid_2 == 0)
+        {
+            // Code exécuté uniquement par le FILS 2
+            srand(getpid()); // Seed différent
+            int t = rand() % 10 + 1;
+            printf("Fils 2 dort pendant %d secondes\n", t);
+            sleep(t);
+            printf("Fils 2 terminé\n");
+            exit(0); 
+        }
+    }
+
+    // Code exécuté uniquement par le PÈRE (après création des fils)
+
+    wait(NULL); // Le père attend la fin d'un fils
+    wait(NULL); // Le père attend le deuxième fils
+
+    fin = time(NULL); // Fin du programme
+
+    printf("Durée totale d'exécution : %ld secondes\n", fin - debut);
+
+    return 0;
+}
+
+Exercice 3 : Lancement d'un programme 
+3.1:
+#include <stdio.h>
+
+int main(int argc , char ** argv)
+{ 
+    if (argc == 3)
+    {
+        // Convertir d'abord les chaines de caracteres en entiers 
+        int a = atoi(argv[1]);
+        int b = atoi(argv[2]); 
+        
+        int s = a + b ;
+        printf(" %d + %d = %d\n", a , b , s);
+
+        return (0); 
+    }
+
+    else 
+    {
+        printf("Usage : %s nombre1 nombre2 " , argv[0]);
+        return (1);
+    }
+}
+
+3.2:
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) 
+{
+    if(argc != 2) 
+    {
+        printf("Usage: %s chemin_cible \n", argv[0]);
+        return (1);
+    }
+
+    char command[512];
+    snprintf(command, sizeof(command), "cp -r . %s", argv[1]);
+    system(command);
+
+    return (0);
+}
+
+3.3:
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    char filename[256];
+    printf("Entrer le nom du fichier à ouvrir : ");
+    scanf("%s", filename);
+
+    char command[512];
+    snprintf(command, sizeof(command), "/usr/bin/emacs %s", filename);
+    system(command);
+
+    return 0;
+}
+
+3.4:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    char dirname[256];
+
+    while(1) {
+        printf("Nom du répertoire (ou 'quit' pour sortir) : ");
+        scanf("%s", dirname);
+
+        if(strcmp(dirname, "quit") == 0) 
+            break;
+
+        char command[512];
+        snprintf(command, sizeof(command), "cp -r . %s", dirname);
+        system(command);
+    }
+
+    return 0;
+}
+
+3.5:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    char filename[256];
+
+    while(1) {
+        printf("Nom du fichier (ou 'quit' pour sortir) : ");
+        scanf("%s", filename);
+
+        if(strcmp(filename, "quit") == 0) break;
+
+        char command[512];
+        snprintf(command, sizeof(command), "/usr/bin/emacs %s", filename);
+        system(command);
+    }
+
+    return 0;
+}
+
+3.6:
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n, k;
+    printf("n = "); scanf("%d", &n);
+    printf("k = "); scanf("%d", &k);
+
+    if(k == 0 || k == n) {
+        printf("C(%d,%d) = 1\n", n, k);
+        return 0;
+    }
+
+    int result = 1;
+    for(int i = 1; i <= k; i++) {  // pas de récursion
+        result = result * (n - i + 1) / i;
+    }
+
+    printf("C(%d,%d) = %d\n", n, k, result);
+    return 0;
+}
+
+Exercice 4:
+4.1: Communication entre processus
+#include<stdio.h>
+#include<unistd.h>
+#include<string.h>
+#include<stdlib.h>
+#include <sys/wait.h>
+
+int main() 
+{
+    int p1[2] , p2[2];
+    pipe(p1);
+    pipe(p2);
+
+    pid_t pid = fork();
+
+    if(pid == 0)
+    {
+        char word[100]; 
+        printf("Entrez un mot : ");
+        scanf("%s", word);
+
+        write(p1[1], word, strlen(word)+1);
+
+        int results;
+        read(p2[0], &results, sizeof(int));
+
+        printf("Résultat : %d\n", results);
+
+        exit(0);
+    }
+    else
+    {   
+
+        char word[100];
+        read(p1[0], word, sizeof(word));
+
+        FILE *f = fopen("file.txt", "r");
+
+        if(f == NULL)
+        {
+            perror("Erreur ouverture fichier");
+            exit(1);
+        }
+
+        char line[100];
+        int found = 0;
+
+        while(fscanf(f, "%s", line) != EOF)
+        {
+            if(strcmp(word, line) == 0)
+            {
+                found = 1;
+                break;
+            }
+        }
+
+        fclose(f);
+
+        write(p2[1], &found, sizeof(int));
+
+        wait(NULL);
+    }
+
+    return (0);
+}
+
+
+4.2 : 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+
+int main() {
+    int fd[2];
+    pipe(fd);
+
+    pid_t pid = fork(); 
+
+    if(pid == 0) 
+    { 
+        // Redirection : stdin du fils = lecture du pipe
+        close(fd[1]);       // On ferme l'écriture dans le fils
+        dup2(fd[0], STDIN_FILENO); // stdin du fils reçoit les données du pipe
+        close(fd[0]);       // fd[0] n'est plus nécessaire après dup2
+
+        // Lecture du mot depuis stdin (qui vient du père)
+        char word[100];
+        scanf("%s", word);
+
+        // Affiche le mot reçu
+        printf("Fils : mot reçu = %s\n", word);
+        exit(0);
+    }
+    else 
+    {
+        close(fd[0]); // On ferme la lecture dans le père
+
+        char msg[100];
+        printf("Père : entrez un mot à envoyer au fils : ");
+        scanf("%s", msg);
+
+        // Écriture dans le pipe
+        write(fd[1], msg, strlen(msg)+1);
+        close(fd[1]); // Fermeture de l'écriture après envoi
+
+        wait(NULL); // On attend que le fils termine
+    }
+
+    return 0;
+}
+
+4.3:
+Programme Père :
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() 
+{
+    int fd[2];
+    pipe(fd);
+
+    pid_t pid = fork();
+
+    if(pid == 0) 
+    {
+        char r[10];
+        sprintf(r, "%d", fd[0]); // passer fd en string
+
+        execl("./fils", "fils", r, NULL);
+    }
+    else {
+        char msg[] = "Hellooooo depuis le père";
+
+        write(fd[1], msg, sizeof(msg));
+    }
+
+    return 0;
+}
+
+Programme Fils : 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) 
+{
+    int fd = atoi(argv[1]); // 2eme argument : fd 
+
+    char msg[100];
+    read(fd, msg, sizeof(msg));
+
+    printf("Message reçu : %s\n", msg);
+
+    return 0;
+}
+
+
+4.4:
+Programme père : 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() {
+    int fd[2];
+    pipe(fd);
+
+    pid_t pid = fork();
+
+    if(pid == 0) 
+    {
+        // convertir fd[0] en chaîne
+        char r[10];
+        sprintf(r, "%d", fd[0]);
+
+        // mettre dans variable d'environnement
+        setenv("FD", r, 1);
+
+        // lancer le programme fils
+        execl("./fils", "fils", NULL);
+    }
+    else
+    {
+        char msg[] = "Hellooooo depuis le père";
+
+        write(fd[1], msg, sizeof(msg));
+    }
+
+    return 0;
+}
+
+programme fils : 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() 
+{
+    // récupérer la variable d'environnement
+    char *fd_str = getenv("FD");
+
+    // convertir en entier
+    int fd = atoi(fd_str);
+
+    char msg[100];
+    read(fd, msg, sizeof(msg));
+
+    printf("Message reçu : %s\n", msg);
+
+    return 0;
+}
+
+
+Exercice 5: Thread 
+5.1
+#include <stdio.h>
+#include <pthread.h>
+
+void* afficher_tableau(void* arg) 
+{
+    int* tab = (int*)arg; // Conversion du pointeur générique
+    int n = 5; // Taille du tableau
+
+    printf("Affichage du tableau : ");
+    for(int i = 0; i < n; i++) 
+    {
+        printf("| %d ", tab[i]);
+    }
+    printf("|\n");
+
+    return NULL;
+}
+
+int main() 
+{
+    pthread_t thread1; // Déclaration du thread
+    int tableau[5] = {1, 2, 3, 4, 5};
+
+    // Création du thread
+    pthread_create(&thread1, NULL, afficher_tableau, (void*)tableau);
+
+    // Attendre la fin du thread
+    pthread_join(thread1, NULL);
+
+    printf("Thread principal terminé\n");
+    return 0;
+}
+
+5.2
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>  // Pour srand et rand
+
+#define TAILLE 5
+
+// Fonction du thread
+void* generer_tableau(void* arg) 
+{
+    int* tab = malloc(TAILLE * sizeof(int)); // Allocation dynamique
+    if(tab == NULL) 
+    {
+        perror("malloc");
+        pthread_exit(NULL);
+    }
+
+    for(int i = 0; i < TAILLE; i++) 
+    {
+        tab[i] = rand() % 100;  // Valeurs entre 0 et 99
+    }
+
+    return (void*)tab; // Retour du tableau
+}
+
+int main() 
+{
+    pthread_t thread;
+    srand(time(NULL));  // Initialisation du générateur aléatoire
+
+    // Création du thread
+    if(pthread_create(&thread, NULL, generer_tableau, NULL) != 0) 
+    {
+        perror("pthread_create");
+        exit(1);
+    }
+
+    // Récupération du résultat
+    int* tableau;
+    pthread_join(thread, (void**)&tableau); // Le tableau est retourné ici
+
+    // Affichage du tableau
+    printf("Tableau généré par le thread : ");
+    for(int i = 0; i < TAILLE; i++) 
+    {
+        printf("%d ", tableau[i]);
+    }
+    printf("\n");
+
+    free(tableau); // Libération mémoire
+    return 0;
+}
+
+5.3
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>
+
+typedef struct 
+{
+    int* tab;
+    int taille;
+    int x; // valeur à chercher
+} TypeTableau;
+
+void* generer_tableau(void* arg) 
+{
+    TypeTableau* t = (TypeTableau*) arg;
+    t->tab = malloc(t->taille * sizeof(int));
+    if(t->tab == NULL) 
+    { 
+        perror("malloc"); 
+        pthread_exit(NULL); 
+    }
+
+    for(int i = 0; i < t->taille; i++) 
+    {
+        t->tab[i] = rand() % 100;
+    }
+    pthread_exit(NULL);
+}
+
+void* chercher_x(void* arg) 
+{
+    TypeTableau* t = (TypeTableau*) arg;
+    int found = 0;
+    for(int i = 0; i < t->taille; i++) 
+    {
+        if(t->tab[i] == t->x) 
+        {
+            found = 1;
+            break;
+        }
+    }
+    printf("Résultat : x %s dans le tableau\n", found ? "est" : "n'est pas");
+    pthread_exit(NULL);
+}
+
+int main() {
+    srand(time(NULL));
+
+    TypeTableau t;
+    printf("Saisir la taille du tableau : ");
+    scanf("%d", &t.taille);
+
+    printf("Saisir la valeur à chercher x : ");
+    scanf("%d", &t.x);
+
+    pthread_t thread_gen, thread_cherche;
+
+    // Création du thread de génération
+    pthread_create(&thread_gen, NULL, generer_tableau, &t);
+    pthread_join(thread_gen, NULL); // attendre que le tableau soit généré
+
+    // Création du thread de recherche
+    pthread_create(&thread_cherche, NULL, chercher_x, &t);
+    pthread_join(thread_cherche, NULL);
+
+    free(t.tab);
+    return 0;
+}
+
+5.4
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>
+#include <unistd.h>
+#include <ctype.h>
+
+typedef struct 
+{
+    int* tab;
+    int taille;
+} Tableau;
+
+Tableau T1, T2;
+int annule = 0; // flag d'annulation
+
+void* generer_tableau(void* arg) 
+{
+    Tableau* t = (Tableau*) arg;
+    t->tab = malloc(t->taille * sizeof(int));
+    for(int i=0;i<t->taille;i++){
+        t->tab[i] = rand()%100;
+    }
+    pthread_exit(NULL);
+}
+
+void* inclusion(void* arg) 
+{
+    int found ;
+    for(int i=0;i<T1.taille;i++)
+    {
+        found = 0;
+        for(int j=0;j<T2.taille;j++)
+        {
+            if(T1.tab[i]==T2.tab[j]){
+                found = 1;
+                break;
+            }
+        }
+        if(!found) 
+            break;
+    }
+    if(annule) {
+        printf("Programme annulé par l'utilisateur\n");
+    } else {
+        printf("T1 %s dans T2\n", found ? "est inclus" : "n'est pas inclus");
+    }
+    pthread_exit(NULL);
+}
+
+void* annulation(void* arg) 
+{
+    char c;
+    c = getchar();
+    if(toupper(c)=='A') 
+        annule=1;
+    pthread_exit(NULL);
+}
+
+int main() 
+{
+    srand(time(NULL));
+    T1.taille=5;
+    T2.taille=10;
+
+    pthread_t t1_gen, t2_gen, t_incl, t_ann;
+
+    pthread_create(&t1_gen,NULL,generer_tableau,&T1);
+    pthread_create(&t2_gen,NULL,generer_tableau,&T2);
+    pthread_join(t1_gen,NULL);
+    pthread_join(t2_gen,NULL);
+
+    pthread_create(&t_incl,NULL,inclusion,NULL);
+    pthread_create(&t_ann,NULL,annulation,NULL);
+
+    pthread_join(t_incl,NULL);
+    pthread_join(t_ann,NULL);
+
+    free(T1.tab);
+    free(T2.tab);
+    return 0;
+}
+
+5.5
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <time.h>
+
+int compt = 0;              // Compteur global
+int limite;                  // Valeur limite
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Thread qui incrémente le compteur
+void* incrementer(void* arg) 
+{
+    while(1) {
+        pthread_mutex_lock(&mutex);   // Début section critique
+        if(compt >= limite) 
+        {
+            pthread_mutex_unlock(&mutex);
+            break;
+        }
+        compt++;
+        pthread_mutex_unlock(&mutex); // Fin section critique
+
+        sleep(rand()%5 + 1);          // Attend 1 à 5 secondes
+    }
+    pthread_exit(NULL);
+}
+
+// Thread qui affiche le compteur
+void* afficher(void* arg) 
+{
+    while(1) {
+        pthread_mutex_lock(&mutex);
+        if(compt >= limite) 
+        {
+            pthread_mutex_unlock(&mutex);
+            break;
+        }
+        printf("Compteur = %d\n", compt);
+        pthread_mutex_unlock(&mutex);
+
+        sleep(2);                      // Affiche toutes les 2 secondes
+    }
+    pthread_exit(NULL);
+}
+
+int main(int argc, char* argv[]) 
+{
+    if(argc != 2) {
+        printf("Usage: %s [valeur_limite]\n", argv[0]);
+        return 1;
+    }
+    limite = atoi(argv[1]);
+    srand(time(NULL));
+
+    pthread_t t_inc, t_aff;
+
+    pthread_create(&t_inc, NULL, incrementer, NULL);
+    pthread_create(&t_aff, NULL, afficher, NULL);
+
+    pthread_join(t_inc, NULL);
+    pthread_join(t_aff, NULL);
+
+    return 0;
+}
+
+5.6
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <time.h>
+
+#define N 100
+
+double tableau[N];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // Mutex pour protéger le tableau
+
+void* calcul_moyenne(void* arg) 
+{
+    for (int i = 1; i < N-1; i++) {
+        pthread_mutex_lock(&mutex); // Début section critique
+        tableau[i] = (tableau[i-1] + tableau[i] + tableau[i+1]) / 3;
+        pthread_mutex_unlock(&mutex); // Fin section critique
+        usleep((rand()%3 + 1) * 1000000); // pause entre 1 et 3 secondes
+    }
+    return NULL;
+}
+
+void* affichage(void* arg) 
+{
+    while(1) {
+        pthread_mutex_lock(&mutex);
+        for(int i=0; i<N; i++)
+            printf("%.2f ", tableau[i]);
+        printf("\n");
+        pthread_mutex_unlock(&mutex);
+        sleep(4); // Affiche toutes les 4 secondes
+    }
+    return NULL;
+}
+
+int main() 
+{
+    srand(time(NULL));
+    for(int i=0; i<N; i++)
+        tableau[i] = rand()%101; // Valeurs aléatoires 0-100
+
+    tableau[0] = 0; tableau[N-1] = 0; // extrémités fixées
+
+    pthread_t t1, t2;
+    pthread_create(&t1, NULL, calcul_moyenne, NULL);
+    pthread_create(&t2, NULL, affichage, NULL);
+
+    pthread_join(t1, NULL); // Attend que le thread calcul se termine
+    pthread_cancel(t2); // Stoppe l'affichage
+    pthread_join(t2, NULL);
+
+    return 0;
+}
+
+5.7
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+double u = 1;
+int compteur = 0;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // 
+
+void* thread1(void* arg) 
+{
+    while(compteur < 10) {
+        pthread_mutex_lock(&mutex);
+        compteur++;
+        u = (u - 1)*(u - 1)/4;
+        printf("T1 -> u = %.2f, compteur = %d\n", u, compteur);
+        pthread_mutex_unlock(&mutex);
+        sleep(rand()%5 + 1);
+    }
+    return NULL;
+}
+
+void* thread2(void* arg) 
+{
+    while(compteur < 10) {
+        pthread_mutex_lock(&mutex);
+        compteur++;
+        u = (u - 2)*(u - 2)/6;
+        printf("T2 -> u = %.2f, compteur = %d\n", u, compteur);
+        pthread_mutex_unlock(&mutex);
+        sleep(rand()%5 + 1);
+    }
+    return NULL;
+}
+
+int main() 
+{
+    srand(time(NULL));
+    pthread_t t1, t2;
+    pthread_create(&t1, NULL, thread1, NULL);
+    pthread_create(&t2, NULL, thread2, NULL);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    return 0;
+}
+
+5.8
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+sem_t sem1, sem2; // 2 sémaphores pour synchronisation
+
+void* thread1(void* arg) 
+{
+    for(int i=0; i<10; i++) 
+    {
+        printf("T1 : traitement iteration %d\n", i+1);
+        sleep(2); // traitement de 2 sec
+        sem_post(&sem1); // signal que T1 a fini
+        sem_wait(&sem2); // attend T2
+    }
+    return NULL;
+}
+
+void* thread2(void* arg) 
+{
+    for(int i=0; i<10; i++) {
+        sem_wait(&sem1); // attend T1
+        int t = rand()%6 + 4; // traitement aléatoire 4-9 sec
+        printf("T2 : traitement iteration %d pour %d sec\n", i+1, t);
+        sleep(t);
+        sem_post(&sem2); // signal que T2 a fini
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t t1, t2;
+
+    sem_init(&sem1, 0, 0); // initialisation des sémaphores à 0
+    sem_init(&sem2, 0, 0);
+
+    pthread_create(&t1, NULL, thread1, NULL);
+    pthread_create(&t2, NULL, thread2, NULL);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+
+    sem_destroy(&sem1);
+    sem_destroy(&sem2);
+
+    return 0;
+}
+
+5.9
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
+
+int octet;
+int ready = 0; // indique si l'octet est prêt
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+void* emetteur(void* arg)
+{
+    for(int i=0;i<10;i++){
+        sleep(rand()%3 + 1); // temps aléatoire 1-3 sec
+        pthread_mutex_lock(&mutex);
+        while(ready) 
+            pthread_cond_wait(&cond,&mutex); // attend que octet lu
+        octet = rand()%256;
+        ready = 1;
+        printf("Émetteur : octet %d envoyé\n", octet);
+        pthread_cond_signal(&cond); // réveille le recepteur
+        pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
+}
+
+void* recepteur(void* arg)
+{
+    for(int i=0;i<10;i++){
+        pthread_mutex_lock(&mutex);
+        while(!ready) 
+            pthread_cond_wait(&cond,&mutex); // attend octet
+        printf("Récepteur : octet %d reçu\n", octet);
+        ready = 0;
+        pthread_cond_signal(&cond); // réveille l'emetteur
+        pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
+}
+
+int main(){
+    srand(time(NULL));
+    pthread_t t1,t2;
+
+    pthread_create(&t1,NULL,emetteur,NULL);
+    pthread_create(&t2,NULL,recepteur,NULL);
+
+    pthread_join(t1,NULL);
+    pthread_join(t2,NULL);
+
+    return 0;
+}
+
+5.10
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define BUFFER_SIZE 10
+
+int buffer[BUFFER_SIZE];
+int top = 0; // Index de la prochaine position libre
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t full;   // nombre d'éléments disponibles
+sem_t empty;  // nombre de places libres
+
+void* producer(void* arg) 
+{
+    int id = *(int*)arg;
+    while(1) {
+        int item = rand() % 256; // produire un octet aléatoire
+        sem_wait(&empty);        // attendre place libre
+        pthread_mutex_lock(&mutex); 
+        buffer[top++] = item;     // placer l'octet
+        printf("Producteur %d : produit %d, top=%d\n", id, item, top);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);          // signaler élément disponible
+        sleep(rand()%3 + 1);
+    }
+    return NULL;
+}
+
+void* consumer(void* arg) 
+{
+    int id = *(int*)arg;
+    while(1) {
+        sem_wait(&full);          // attendre qu'un élément soit disponible
+        pthread_mutex_lock(&mutex);
+        int item = buffer[--top]; // consommer l'élément
+        printf("Consommateur %d : consomme %d, top=%d\n", id, item, top);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);         // signaler place libre
+        sleep(rand()%3 + 1);
+    }
+    return NULL;
+}
+
+int main() 
+{
+    srand(time(NULL));
+    int N = 2, M = 2; // producteurs et consommateurs
+    pthread_t producers[N], consumers[M];
+    int ids[N>M?N:M];
+    
+    sem_init(&full, 0, 0);             // aucun élément initial
+    sem_init(&empty, 0, BUFFER_SIZE);  // tampon vide
+
+    for(int i=0;i<N;i++)
+    {   
+        ids[i]=i; 
+        pthread_create(&producers[i], NULL, producer, &ids[i]); 
+    }
+    for(int i=0;i<M;i++) 
+    { 
+        ids[i]=i; 
+        pthread_create(&consumers[i], NULL, consumer, &ids[i]); 
+    }
+
+    for(int i=0;i<N;i++) 
+    {
+        pthread_join(producers[i], NULL);
+    }
+    for(int i=0;i<M;i++) 
+    {
+        pthread_join(consumers[i], NULL);
+    }
+
+    return 0;
+}
+
+5.11
+#include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define SIZE 15
+
+int data[SIZE];     // base de données (tableau)
+int read_count = 0; // nombre de lecteurs actifs
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // protège read_count
+pthread_mutex_t wrt = PTHREAD_MUTEX_INITIALIZER;   // protège la base
+
+
+void* reader(void* arg)
+{
+    int id = *(int*)arg;
+
+    while(1)
+    {
+        // on protège read_count
+        pthread_mutex_lock(&mutex);
+        read_count++;
+
+        if(read_count == 1)
+            pthread_mutex_lock(&wrt); // premier lecteur bloque écrivains
+
+        pthread_mutex_unlock(&mutex);
+
+        // lecture (pas critique)
+        int i = rand() % SIZE;
+        printf("Lecteur %d lit data[%d] = %d\n", id, i, data[i]);
+
+        sleep(rand()%3 + 1);
+
+        // fin lecture
+        pthread_mutex_lock(&mutex);
+        read_count--;
+
+        if(read_count == 0)
+            pthread_mutex_unlock(&wrt); // dernier lecteur libère écrivains
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    return NULL;
+}
+
+
+void* writer(void* arg)
+{
+    int id = *(int*)arg;
+
+    while(1)
+    {
+        pthread_mutex_lock(&wrt); // accès exclusif
+
+        int i = rand() % SIZE;
+        data[i] = rand() % 100;
+
+        printf("Écrivain %d écrit data[%d] = %d\n", id, i, data[i]);
+
+        pthread_mutex_unlock(&wrt);
+
+        sleep(rand()%5 + 1);
+    }
+
+    return NULL;
+}
+
+
+int main()
+{
+    srand(time(NULL));
+
+    int N = 3; // lecteurs
+    int M = 2; // écrivains
+
+    pthread_t readers[N], writers[M];
+    int ids[N > M ? N : M];
+
+    // création lecteurs
+    for(int i=0;i<N;i++)
+    {
+        ids[i] = i;
+        pthread_create(&readers[i], NULL, reader, &ids[i]);
+    }
+
+    // création écrivains
+    for(int i=0;i<M;i++)
+    {
+        ids[i] = i;
+        pthread_create(&writers[i], NULL, writer, &ids[i]);
+    }
+
+    // attente
+    for(int i=0;i<N;i++)
+        pthread_join(readers[i], NULL);
+
+    for(int i=0;i<M;i++)
+        pthread_join(writers[i], NULL);
+
+    return 0;
+}
+
+Exercice 6: Gestions de Disques
+6.1
+Données :
+- 2 plateaux
+- 2 faces par plateau → 4 faces
+- 1000 cylindres
+- 60 secteurs
+- 1024 octets par secteur
+
+a) Capacité totale : 
+
+Capacité = plateaux × faces × cylindres × secteurs × taille secteur
+         = 2 × 2 × 1000 × 60 × 1024
+         = 245 760 000 octets ≈ 245 Mo
+
+b) Position d’un octet:  
+
+Formule :
+position = (face × nb_cyl × nb_sec + cylindre × nb_sec + secteur) × taille + offset
+
+Exemple :
+face = 2
+cylindre = 350
+secteur = 45
+offset = 300
+
+Nombre total de secteur  par face : 
+1000 × 60 = 60000
+Calcul global : 
+position = (2 × 60000 + 350 × 60 + 45) × 1024 + 300
+
+
+= (120000 + 21000 + 45) × 1024 + 300
+= 141045 × 1024 + 300
+= 144430080 + 300
+= 144430380
+
+Position = 144 430 380
+
+c) Retrouver secteur depuis un octet : 
+
+Secteur global : 
+78000000 / 1024 ≈ 76171
+
+Reste : 
+78000000 % 1024 = 896
+
+face : 
+
+secteurs par face = 1000 × 60 = 60000
+face = 76171 / 60000 = 1
+
+76171 - 60000 = 16171
+
+Cylindre : 
+cylindre = 16171 / 60 = 269
+
+reste 16171 % 60 = 31
+
+Secteur : 
+secteur = 31
+
+
+Face = 1
+Cylindre = 269
+Secteur = 31
+Offset = 896
+
+6.2
+#include <stdio.h>
+#include <dirent.h>  // pour DIR et readdir
+#include <sys/stat.h> // pour struct stat et stat()
+#include <string.h>  // pour strcat, strcpy
+#include <stdlib.h>  // pour exit
+
+int main(int argc, char *argv[])
+{
+    if(argc != 2) {
+        printf("Usage : %s <répertoire>\n", argv[0]);
+        return 1;
+    }
+
+    DIR *d = opendir(argv[1]); // ouvrir le répertoire passé en argument
+    if(!d) {
+        perror("Erreur ouverture dossier");
+        return 1;
+    }
+
+    struct dirent *file;
+
+    // parcourir tous les fichiers du dossier
+    while((file = readdir(d)) != NULL)
+    {
+        struct stat st;
+        char path[1024];
+
+        // construire le chemin complet : dossier + nom du fichier
+        snprintf(path, sizeof(path), "%s/%s", argv[1], file->d_name);
+
+        if(stat(path, &st) == -1) { // lire les infos du fichier
+            perror("Erreur stat");
+            continue;
+        }
+
+        // afficher uniquement les fichiers > 1 Mo
+        if(st.st_size > 1024*1024) {
+            printf("Fichier : %s, UID=%d, taille=%ld octets\n",
+                   file->d_name, st.st_uid, st.st_size);
+        }
+    }
+
+    closedir(d); // fermer le répertoire
+    return 0;
+}
+
+6.3
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+int main() {
+    int n;
+    printf("Nombre d'entiers à saisir : ");
+    scanf("%d", &n);
+
+    int *tab = malloc(n * sizeof(int));
+    if(!tab) 
+    { 
+        perror("malloc"); 
+        return 1; 
+    }
+
+    for(int i=0;i<n;i++) {
+        printf("Entier %d : ", i);
+        scanf("%d", &tab[i]);
+    }
+
+    // Ouvrir fichier binaire avec permissions : groupe écriture, autres lecture
+    int fd = open("tab.bin", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWGRP | S_IROTH);
+    if(fd == -1) 
+    { 
+        perror("open"); 
+        return 1; 
+    }
+
+    write(fd, tab, n*sizeof(int)); // écrire le tableau
+    close(fd);
+
+    printf("Tableau sauvegardé dans tab.bin\n");
+    free(tab);
+    return 0;
+}
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    FILE *f = fopen("tab.bin", "rb");
+    if(!f) { perror("fopen"); return 1; }
+
+    int *tab = NULL;
+    int capacity = 10;
+    int n = 0;
+    tab = malloc(capacity * sizeof(int));
+
+    int x;
+    while(fread(&x, sizeof(int), 1, f) == 1) {
+        if(n >= capacity) {
+            capacity *= 2;
+            tab = realloc(tab, capacity * sizeof(int));
+        }
+        tab[n++] = x;
+    }
+
+    printf("Tableau chargé (%d entiers) :\n", n);
+    for(int i=0;i<n;i++) printf("%d ", tab[i]);
+    printf("\n");
+
+    free(tab);
+    fclose(f);
+    return 0;
+}
+
+Exercice 7: Signaux 
+7.1
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+
+int main() {
+    pid_t pid = fork();
+
+    if(pid == 0) {
+        // Fils : calcul sans fin
+        int x = 0;
+        while(1) {
+            x += 1; // calcul simple
+        }
+    } else {
+        // Père : menu de contrôle
+        char choix;
+        while(1) 
+        {
+            printf("Menu : s = stop, r = resume, q = quit\n");
+            scanf(" %c", &choix); // espace avant %c pour consommer \n
+            if(choix == 's') {
+                kill(pid, SIGSTOP); // endort le fils
+            } 
+            else if(choix == 'r') {
+                kill(pid, SIGCONT); // réveille le fils
+            } 
+            else if(choix == 'q') {
+                kill(pid, SIGKILL); // tue le fils
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+7.2
+saisit.c 
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+
+int main() {
+    int n;
+    printf("Entrez un entier : ");
+    scanf("%d", &n);
+
+    FILE *f = fopen("/tmp/entier.txt", "w");
+    fprintf(f, "%d\n", n);
+    fclose(f);
+
+    pid_t pid_affiche;
+    printf("PID du programme affiche.c : ");
+    scanf("%d", &pid_affiche);
+
+    kill(pid_affiche, SIGUSR1); // envoyer signal
+    return 0;
+}
+
+affiche.c 
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+
+void handler(int sig) {
+    FILE *f = fopen("/tmp/entier.txt", "r");
+    int n;
+    fscanf(f, "%d", &n);
+    fclose(f);
+    printf("Entier reçu : %d\n", n);
+}
+
+int main() {
+    signal(SIGUSR1, handler);
+    printf("PID = %d, en attente du signal...\n", getpid());
+    while(1) pause(); // attendre signal
+}
+
+7.3
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+
+#define N 5
+
+pid_t pids[N];
+
+void child_handler(int sig) {
+    printf("Fils %d tué !\n", getpid());
+    exit(0);
+}
+
+int main() {
+    for(int i=0;i<N;i++) {
+        pids[i] = fork();
+        if(pids[i]==0) {
+            signal(SIGTERM, child_handler);
+            while(1) {}
+        }
+    }
+
+    int choix, fils;
+    while(1) {
+        printf("Menu : 1=endormir, 2=réveiller, 3=terminer, 4=quit\nChoix : ");
+        scanf("%d", &choix);
+        if(choix==4) break;
+        printf("Numéro du fils (0-%d) : ", N-1);
+        scanf("%d", &fils);
+
+        if(choix==1) 
+            kill(pids[fils], SIGSTOP);
+        else if(choix==2) 
+            kill(pids[fils], SIGCONT);
+        else if(choix==3) 
+            kill(pids[fils], SIGTERM);
+    }
+}
+
+7.4
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() 
+{
+    int n;
+    printf("Nombre d'éléments : ");
+    scanf("%d", &n);
+
+    int *tab = malloc(n * sizeof(int));
+    for(int i=0;i<n;i++) {
+        printf("tab[%d] = ", i);
+        scanf("%d", &tab[i]);
+    }
+
+    int i;
+    while(1) {
+        printf("Index à afficher : ");
+        scanf("%d", &i);
+        if(i>=0 && i<n) {
+            printf("tab[%d] = %d\n", i, tab[i]);
+            break;
+        } else {
+            printf("Erreur : index invalide !\n");
+        }
+    }
+
+    free(tab);
+    return 0;
+}
+
+Exercice 8: Programmation réseaux 
+8.1
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <time.h>
+
+#define PORT 5000
+#define MAXLINE 1024
+#define MAX_PRODUCTS 100
+
+typedef struct {
+    char name[50];
+    float price;
+} Product;
+
+int main() {
+    Product products[MAX_PRODUCTS];
+    int n_products = 0;
+
+    // Charger la base de produits
+    FILE *f = fopen("produits.txt", "r");
+    if (!f) { perror("produits.txt"); return 1; }
+    while (fscanf(f, "%s %f", products[n_products].name, &products[n_products].price) != EOF) {
+        n_products++;
+    }
+    fclose(f);
+
+    // Création du serveur TCP
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in servaddr = {0};
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+    bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+    listen(sockfd, 5);
+    printf("Serveur lancé sur le port %d\n", PORT);
+
+    while (1) {
+        struct sockaddr_in cliaddr;
+        socklen_t len = sizeof(cliaddr);
+        int connfd = accept(sockfd, (struct sockaddr*)&cliaddr, &len);
+        printf("Connexion acceptée\n");
+
+        char buffer[MAXLINE];
+        send(connfd, "Nom du produit : ", 17, 0);
+        int n = read(connfd, buffer, MAXLINE); buffer[n-1]='\0';
+        char product_name[50]; 
+        strcpy(product_name, buffer);
+
+        send(connfd, "Quantité : ", 11, 0);
+        n = read(connfd, buffer, MAXLINE)
+        ; buffer[n-1]='\0';
+        int qty = atoi(buffer);
+
+        send(connfd, "Votre nom : ", 12, 0);
+        n = read(connfd, buffer, MAXLINE); 
+        buffer[n-1]='\0';
+        char client_name[50]; 
+        strcpy(client_name, buffer);
+
+        float total = -1;
+        for (int i=0; i<n_products; i++) {
+            if (strcmp(products[i].name, product_name)==0) {
+                total = products[i].price * qty;
+                break;
+            }
+        }
+
+        if (total >= 0) {
+            sprintf(buffer, "Prix total = %.2f\n", total);
+            send(connfd, buffer, strlen(buffer), 0);
+
+            char filename[100];
+            time_t t = time(NULL);
+            struct tm *tm_info = localtime(&t);
+            strftime(filename, 100, "commande_%Y%m%d_%H%M%S.txt", tm_info);
+            FILE *fcmd = fopen(filename, "w");
+            fprintf(fcmd, "Client: %s\nProduit: %s\nQuantité: %d\nTotal: %.2f\n",
+                    client_name, product_name, qty, total);
+            fclose(fcmd);
+        } else {
+            send(connfd, "Produit non trouvé\n", 19, 0);
+        }
+        close(connfd);
+    }
+    return 0;
+}
+
+8.2
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 12346
+#define MAX 100
+
+typedef struct {
+    char ip[50];
+    char nom[50];
+} ClientAutorise;
+
+// Charger les IP autorisées
+int chargerClients(ClientAutorise tab[], const char* fichier) {
+    FILE *fp = fopen(fichier,"r");
+    if(!fp){ perror("fopen"); return 0; }
+    int n=0;
+    while(fscanf(fp,"%s %s", tab[n].ip, tab[n].nom)==2) n++;
+    fclose(fp);
+    return n;
+}
+
+// Vérifier si IP est autorisée
+ClientAutorise* verifierIP(ClientAutorise tab[], int n, char* ip) {
+    for(int i=0;i<n;i++)
+        if(strcmp(tab[i].ip,ip)==0) return &tab[i];
+    return NULL;
+}
+
+int main() {
+    ClientAutorise clients[MAX];
+    int nClients = chargerClients(clients,"add_autoris.txt");
+    if(nClients==0){ printf("Aucun client autorisé.\n"); return 1; }
+
+    int sockfd, newsockfd;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    if(bind(sockfd,(struct sockaddr*)&serv_addr,sizeof(serv_addr))<0){ perror("bind"); exit(1);}
+    listen(sockfd,5);
+    printf("Serveur en écoute sur port %d...\n", PORT);
+
+    newsockfd = accept(sockfd,(struct sockaddr*)&cli_addr,&clilen);
+    if(newsockfd<0){ perror("accept"); exit(1); }
+
+    char ip_client[50];
+    strcpy(ip_client, inet_ntoa(cli_addr.sin_addr));
+    ClientAutorise* c = verifierIP(clients,nClients,ip_client);
+
+    if(c){
+        char msg[100];
+        sprintf(msg,"Bienvenue %s !\n", c->nom);
+        write(newsockfd,msg,strlen(msg));
+        printf("Client %s connecté et autorisé.\n", ip_client);
+    } else {
+        char* msg="Vous n'êtes pas autorisé !\n";
+        write(newsockfd,msg,strlen(msg));
+        printf("Client %s refusé.\n", ip_client);
+        close(newsockfd);
+    }
+
+    close(sockfd);
+    return 0;
+}
+
+8.3
+Serveur: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <time.h>
+#include <fcntl.h>
+
+#define PORT 12347
+#define BUF_SIZE 1024
+
+int main() {
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0){ perror("socket"); return 1; }
+
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    if(bind(sockfd,(struct sockaddr*)&serv_addr,sizeof(serv_addr))<0){ perror("bind"); return 1; }
+    listen(sockfd,5);
+    printf("Serveur en écoute sur le port %d\n", PORT);
+
+    int newsock = accept(sockfd,(struct sockaddr*)&cli_addr,&clilen);
+    if(newsock<0){ perror("accept"); return 1; }
+
+    // Récupération de l'adresse IP du client
+    char ip_client[50];
+    strcpy(ip_client, inet_ntoa(cli_addr.sin_addr));
+
+    // Création nom fichier avec IP et date
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    char filename[100];
+    sprintf(filename,"/home/save/%s_%04d_%02d_%02d.txt", ip_client,
+            tm_info->tm_year+1900, tm_info->tm_mon+1, tm_info->tm_mday);
+
+    FILE *fp = fopen(filename,"wb");
+    if(!fp){ perror("fopen"); return 1; }
+
+    // Réception du fichier
+    char buf[BUF_SIZE];
+    ssize_t n;
+    while((n=read(newsock,buf,BUF_SIZE))>0){
+        fwrite(buf,1,n,fp);
+    }
+
+    fclose(fp);
+    close(newsock);
+    close(sockfd);
+    printf("Fichier reçu et sauvegardé dans %s\n", filename);
+    return 0;
+}
+
+Client:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <time.h>
+#include <fcntl.h>
+
+#define PORT 12347
+#define BUF_SIZE 1024
+
+int main(int argc, char *argv[]) {
+    if(argc!=2){
+        printf("Usage: %s <fichier_local>\n", argv[0]);
+        return 1;
+    }
+
+    // Création du socket client
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0){ perror("socket"); return 1; }
+
+    struct sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr); // serveur local pour test
+
+    if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))<0){
+        perror("connect"); return 1;
+    }
+
+    // Ouverture du fichier local
+    FILE *fp = fopen(argv[1],"rb");
+    if(!fp){ perror("fopen"); return 1; }
+
+    // Envoi du fichier
+    char buf[BUF_SIZE];
+    size_t n;
+    while((n=fread(buf,1,BUF_SIZE,fp))>0){
+        write(sockfd, buf, n);
+    }
+    fclose(fp);
+    close(sockfd);
+
+    printf("Fichier envoyé avec succès.\n");
+    return 0;
+}
+
+8.4
+Serveur : 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+
+#define PORT 12347
+#define BUFFER 4096
+
+int main() {
+    int sockfd, newsockfd;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+    char buffer[BUFFER];
+
+    // Créer le socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    // Bind
+    if(bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        perror("bind"); exit(1);
+    }
+
+    // Listen
+    listen(sockfd, 5);
+    printf("Serveur en écoute sur port %d...\n", PORT);
+
+    // Accept
+    newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
+    if(newsockfd < 0){ perror("accept"); exit(1); }
+
+    printf("Client connecté : %s\n", inet_ntoa(cli_addr.sin_addr));
+
+    // Créer un fichier temporaire pour l'archive
+    FILE *f = fopen("/tmp/rep.tgz", "wb");
+    if(!f){ perror("fopen"); exit(1); }
+
+    // Lire les données envoyées par le client
+    int n;
+    while((n = read(newsockfd, buffer, BUFFER)) > 0){
+        fwrite(buffer, 1, n, f);
+    }
+    fclose(f);
+    printf("Archive reçue !\n");
+
+    // Décompresser l'archive et supprimer le fichier
+    system("cd /home/save/ ; tar zxvf /tmp/rep.tgz ; rm /tmp/rep.tgz");
+    printf("Archive décompressée sur le serveur.\n");
+
+    close(newsockfd);
+    close(sockfd);
+    return 0;
+}
+
+Client : 
+# client8.4.py
+import socket
+import os
+
+HOST = '127.0.0.1'
+PORT = 12347
+
+# Chemin vers le répertoire client
+rep_client = "/chemin/vers/le/repertoire/client"
+archive = "/tmp/rep.tgz"
+
+# Créer une archive tar.gz du répertoire
+os.system(f"tar zcvf {archive} {rep_client}")
+
+# Envoyer l'archive au serveur
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    with open(archive, "rb") as f:
+        data = f.read()
+        s.sendall(data)
+
+print("Archive envoyée !")
+
+8.5
+Serveur:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <pthread.h>
+
+#define PORT 12348
+#define MAX_CLIENTS 10
+#define BUFFER 1024
+
+typedef struct {
+    int sockfd;
+    int pair_sockfd; // socket du client partenaire
+} Client;
+
+// Tableau de clients
+Client clients[MAX_CLIENTS];
+int nb_clients = 0;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Fonction thread pour gérer la communication client
+void* client_handler(void* arg) {
+    int idx = *(int*)arg;
+    char buffer[BUFFER];
+    int n;
+
+    while((n = read(clients[idx].sockfd, buffer, BUFFER)) > 0) {
+        buffer[n] = '\0';
+
+        // Envoi au client partenaire
+        if(clients[idx].pair_sockfd != -1) {
+            write(clients[idx].pair_sockfd, buffer, n);
+        }
+    }
+
+    printf("Client %d déconnecté\n", idx);
+    close(clients[idx].sockfd);
+
+    pthread_mutex_lock(&mutex);
+    clients[idx].sockfd = -1;
+    clients[idx].pair_sockfd = -1;
+    pthread_mutex_unlock(&mutex);
+
+    return NULL;
+}
+
+int main() {
+    int sockfd, newsockfd;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    if(bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        perror("bind"); exit(1);
+    }
+
+    listen(sockfd, 5);
+    printf("Serveur de messagerie en écoute sur port %d...\n", PORT);
+
+    for(int i = 0; i < MAX_CLIENTS; i++){
+        clients[i].sockfd = -1;
+        clients[i].pair_sockfd = -1;
+    }
+
+    while(1) {
+        newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
+        if(newsockfd < 0){ perror("accept"); continue; }
+
+        pthread_mutex_lock(&mutex);
+
+        int idx = -1;
+        for(int i = 0; i < MAX_CLIENTS; i++){
+            if(clients[i].sockfd == -1){
+                idx = i;
+                clients[i].sockfd = newsockfd;
+                clients[i].pair_sockfd = -1;
+                break;
+            }
+        }
+
+        if(idx == -1){
+            char* msg = "Serveur plein !\n";
+            write(newsockfd, msg, strlen(msg));
+            close(newsockfd);
+            pthread_mutex_unlock(&mutex);
+            continue;
+        }
+
+        // Relier deux clients par paires
+        for(int i = 0; i < MAX_CLIENTS; i++){
+            if(i != idx && clients[i].sockfd != -1 && clients[i].pair_sockfd == -1){
+                clients[i].pair_sockfd = clients[idx].sockfd;
+                clients[idx].pair_sockfd = clients[i].sockfd;
+                break;
+            }
+        }
+
+        pthread_t tid;
+        int *p = malloc(sizeof(int));
+        *p = idx;
+        pthread_create(&tid, NULL, client_handler, p);
+
+        pthread_mutex_unlock(&mutex);
+    }
+
+    close(sockfd);
+    return 0;
+}
+
+
+Client : 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
+#define PORT 12348
+#define BUFFER 1024
+
+int sockfd;
+
+void* receive_handler(void* arg){
+    char buffer[BUFFER];
+    int n;
+    while((n = read(sockfd, buffer, BUFFER)) > 0){
+        buffer[n] = '\0';
+        printf("L'autre client dit : %s\n", buffer);
+    }
+    return NULL;
+}
+
+int main() {
+    struct sockaddr_in serv_addr;
+    char buffer[BUFFER];
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+
+    if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        perror("connect"); exit(1);
+    }
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, receive_handler, NULL);
+
+    while(1){
+        printf("Saisissez votre message : ");
+        fgets(buffer, BUFFER, stdin);
+        write(sockfd, buffer, strlen(buffer));
+    }
+
+    close(sockfd);
+    return 0;
+}
+
+8.6
+Serveur: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
+#define PORT 12349
+#define MAX_CLIENTS 20
+#define BUFFER 1024
+
+int clients[MAX_CLIENTS];
+int nb_clients = 0;
+pthread_mutex_t mutex_clients = PTHREAD_MUTEX_INITIALIZER; // protège le tableau clients
+pthread_mutex_t mutex_send = PTHREAD_MUTEX_INITIALIZER;    // protège l'envoi d'un message
+
+// envoyer un message à tous les clients sauf celui qui envoie
+void broadcast(char* msg, int sender_fd) {
+    pthread_mutex_lock(&mutex_send);
+    for(int i = 0; i < nb_clients; i++){
+        if(clients[i] != sender_fd){
+            write(clients[i], msg, strlen(msg));
+        }
+    }
+    pthread_mutex_unlock(&mutex_send);
+}
+
+// thread pour gérer chaque client
+void* client_handler(void* arg){
+    int sockfd = *(int*)arg;
+    char buffer[BUFFER];
+    int n;
+
+    while((n = read(sockfd, buffer, BUFFER-1)) > 0){
+        buffer[n] = '\0';
+        char msg[BUFFER+50];
+        snprintf(msg, sizeof(msg), "Client %d dit : %s", sockfd, buffer);
+        broadcast(msg, sockfd);
+    }
+
+    printf("Client %d déconnecté\n", sockfd);
+
+    // retirer le client du tableau
+    pthread_mutex_lock(&mutex_clients);
+    for(int i = 0; i < nb_clients; i++){
+        if(clients[i] == sockfd){
+            for(int j=i;j<nb_clients-1;j++)
+                clients[j]=clients[j+1];
+            nb_clients--;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&mutex_clients);
+
+    close(sockfd);
+    return NULL;
+}
+
+int main(){
+    int sockfd, newsockfd;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen = sizeof(cli_addr);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    if(bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){ perror("bind"); exit(1); }
+    listen(sockfd, 5);
+    printf("Serveur forum de chat en écoute sur port %d...\n", PORT);
+
+    while(1){
+        newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
+        if(newsockfd < 0){ perror("accept"); continue; }
+
+        pthread_mutex_lock(&mutex_clients);
+        if(nb_clients < MAX_CLIENTS){
+            clients[nb_clients++] = newsockfd;
+            pthread_t tid;
+            int *p = malloc(sizeof(int));
+            *p = newsockfd;
+            pthread_create(&tid, NULL, client_handler, p);
+        } else {
+            char* msg = "Serveur plein !\n";
+            write(newsockfd, msg, strlen(msg));
+            close(newsockfd);
+        }
+        pthread_mutex_unlock(&mutex_clients);
+    }
+
+    close(sockfd);
+    return 0;
+}
+
+Client : 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
+#define PORT 12349
+#define BUFFER 1024
+
+int sockfd;
+
+void* receive_handler(void* arg){
+    char buffer[BUFFER+50];
+    int n;
+    while((n = read(sockfd, buffer, BUFFER)) > 0){
+        buffer[n] = '\0';
+        printf("%s", buffer);
+    }
+    return NULL;
+}
+
+int main(){
+    struct sockaddr_in serv_addr;
+    char buffer[BUFFER];
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd<0){ perror("socket"); exit(1); }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+
+    if(connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))<0){ perror("connect"); exit(1); }
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, receive_handler, NULL);
+
+    while(1){
+        fgets(buffer, BUFFER, stdin);
+        write(sockfd, buffer, strlen(buffer));
+    }
+
+    close(sockfd);
+    return 0;
+}
+
+

@@ -1,0 +1,1166 @@
+Exercice 2: 
+2.1
+import os
+
+pid = os.fork() # creation d'un processus 
+
+if pid == -1: 
+    print("Erreur de creation de processus")
+elif pid == 0:
+    print("Je suis le fils")
+else:
+    print("Je suis le père")
+
+2.2 
+import os
+
+pid1 = os.fork() # creation d'un processus 
+
+if pid1 == 0: 
+    print("Je suis le fils 1")
+else: 
+    pid2 = os.fork()
+    if pid2 == 0:
+        print("Je suis le fils 2")
+    else : 
+        print("Je suis le père");
+
+2.3
+import os
+
+for i in range(5):
+    pid = os.fork()
+    if pid == 0:
+        print(f"Je suis le fils {i+1}")
+        break
+
+2.4
+import os
+
+num = 0
+for i in range(5):
+    pid = os.fork()
+    if pid == 0:
+        num = i+1
+        print(f"Je suis le fils {num}")
+        break 
+
+2.5
+import os
+import time
+import random
+
+# Début du programme
+debut = int(time.time())
+
+# Création du premier fils
+pid_1 = os.fork()
+
+if pid_1 == 0:
+    # FILS 1
+    random.seed(os.getpid())  # seed différent
+    t = random.randint(1, 10)
+    print(f"Fils 1 dort pendant {t} secondes")
+    time.sleep(t)
+    print("Fils 1 terminé")
+    os._exit(0)  # IMPORTANT (équivalent de exit en C)
+
+else:
+    # PÈRE
+    pid_2 = os.fork()
+
+    if pid_2 == 0:
+        # FILS 2
+        random.seed(os.getpid())
+        t = random.randint(1, 10)
+        print(f"Fils 2 dort pendant {t} secondes")
+        time.sleep(t)
+        print("Fils 2 terminé")
+        os._exit(0)
+
+# Code exécuté par le PÈRE uniquement
+
+os.wait()  # attendre un fils
+os.wait()  # attendre le deuxième
+
+fin = int(time.time())
+
+print(f"Durée totale d'exécution : {fin - debut} secondes")
+
+Exercice 3: Lancement d'un programme 
+3.1
+import sys 
+
+if len(sys.argv) == 3:
+    a = int(sys.argv[1])
+    b = int(sys.argv[2])
+
+    s = a + b 
+    print(f"{a} + {b} = {s}")
+
+else :
+    print(f"Usage : {sys.argv[0]} nombre1 nombre2")
+
+3.2
+import shutil
+import sys
+import os
+
+if len(sys.argv) != 2:
+    print(f"Usage: {sys.argv[0]} chemin_cible")
+    sys.exit(1)
+
+chemin = sys.argv[1]
+courant = os.getcwd()
+shutil.copytree(courant, chemin, dirs_exist_ok=True)
+
+3.3
+import os
+
+filename = input("Entrer le nom du fichier à ouvrir : ")
+os.system(f"/usr/bin/emacs {filename}")
+
+3.4
+import shutil
+import os
+
+while True:
+    dirname = input("Nom du répertoire (ou 'quit' pour sortir) : ")
+    if dirname.lower() == "quit":
+        break
+    shutil.copytree(os.getcwd(), dirname, dirs_exist_ok=True) # shutil.copytree = cp -r 
+
+3.5
+import os
+
+while True:
+    filename = input("Nom du fichier (ou 'quit' pour sortir) : ")
+    if filename.lower() == "quit":
+        break
+    os.system(f"/usr/bin/emacs {filename}")
+
+3.6
+n = int(input("n = "))
+k = int(input("k = "))
+
+if k == 0 or k == n:
+    print(f"C({n},{k}) = 1")
+else:
+    result = 1
+    for i in range(1, k+1):
+        result = result * (n - i + 1) // i
+    print(f"C({n},{k}) = {result}")
+
+Exercice 4: Communication entre processus
+4.1
+import os
+
+# Création des deux pipes
+p1_r, p1_w = os.pipe()   # Fils -> Père
+p2_r, p2_w = os.pipe()   # Père -> Fils
+
+pid = os.fork()
+
+if pid == 0:
+    word = input("Entrez un mot : ")
+
+    # Envoi du mot au père
+    os.write(p1_w, word.encode())
+
+    # Lecture du résultat du père
+    result = os.read(p2_r, 10).decode()
+
+    print("Résultat :", result)
+
+    os._exit(0)
+
+else:
+
+    # Lecture du mot envoyé par le fils
+    word = os.read(p1_r, 100).decode()
+
+    found = 0
+
+    try:
+        with open("file.txt", "r") as f:
+            for line in f.read().split():
+                if line == word:
+                    found = 1
+                    break
+    except:
+        print("Erreur ouverture fichier")
+        os._exit(1)
+
+    # Envoi du résultat au fils
+    os.write(p2_w, str(found).encode())
+
+    os.wait()
+
+4.2
+import os
+import sys
+
+# Création d'un pipe
+r, w = os.pipe()
+
+pid = os.fork()  # Création du fils
+
+if pid == 0:
+    os.close(w)  # on ferme l'écriture dans le fils
+    os.dup2(r, 0)  # redirection stdin du fils vers lecture du pipe
+    os.close(r)  # plus nécessaire après dup2
+
+    # Lecture depuis stdin (qui vient du père)
+    mot = input("Fils lit depuis stdin : ")
+    print(f"Fils : mot reçu = {mot}")
+else:
+    os.close(r)  # on ferme la lecture dans le père
+
+    mot = input("Père : entrez un mot à envoyer au fils : ")
+    os.write(w, mot.encode())  # envoi du mot au fils
+    os.close(w)  # fermeture après écriture
+
+    os.wait()  # attendre la fin du Fils
+
+4.3
+import os
+
+# Création d'un tube
+r, w = os.pipe()
+
+# Création d'un processus fils
+pid = os.fork()
+
+if pid == 0:
+    os.close(w)  # le fils ne va pas écrire
+    # Lire le message du père
+    msg = os.read(r, 1024).decode()
+    print("Message reçu :", msg)
+    os.close(r)
+    exit(0)
+else:
+
+    os.close(r)  # le père ne va pas lire
+    msg = "Hellooooo depuis le père"
+    os.write(w, msg.encode())  # écrire dans le tube
+    os.close(w)  # fermer après écriture
+    os.wait()  # attendre que le fils se termine
+
+4.4
+Programme Pere :
+import os
+
+r, w = os.pipe()
+
+pid = os.fork()
+
+if pid == 0:
+    # mettre le fd dans variable d'environnement
+    os.environ["FD"] = str(r)
+
+    # lancer le programme fils
+    os.execv("/usr/bin/python3", ["python3", "programme_fils44.py"])
+
+else:
+    msg = "Hello depuis le père"
+    os.write(w, msg.encode())
+
+Programme Fils : 
+import os
+
+# récupérer le fd depuis l'environnement
+fd = int(os.environ["FD"])
+
+# lire le message
+msg = os.read(fd, 100).decode()
+
+print("Message reçu :", msg)
+
+Exercice 5 : Thread 
+5.1
+import threading  # Pour créer des threads
+
+# Fonction exécutée par le thread
+def afficher_tableau(tab):
+    print("Contenu du tableau :", tab)
+
+# Programme principal
+tableau = [1, 2, 3, 4, 5]
+
+# Création du thread
+thread = threading.Thread(target=afficher_tableau, args=(tableau,))
+
+# Démarrage du thread
+thread.start()
+
+# Attente de la fin du thread
+thread.join()
+
+print("Thread terminé .")   
+
+5.2
+import threading
+import random
+
+TAILLE = 5
+
+def generer_tableau(result):
+    tab = [random.randint(0, 99) for _ in range(TAILLE)]
+    result.append(tab)  # On retourne le tableau via une liste partagée
+
+# Liste partagée pour récupérer le résultat
+result = []
+
+thread = threading.Thread(target=generer_tableau, args=(result,))
+thread.start()
+thread.join()  # On attend que le thread finisse
+
+print("Tableau généré par le thread :", result[0])
+
+5.3
+import threading
+import random
+
+class TypeTableau:
+    def __init__(self, taille, x):
+        self.tab = []
+        self.taille = taille
+        self.x = x
+
+def generer_tableau(t):
+    t.tab = [random.randint(0, 99) for _ in range(t.taille)]
+
+def chercher_x(t):
+    if t.x in t.tab:
+        print(f"Résultat : x est dans le tableau")
+    else:
+        print(f"Résultat : x n'est pas dans le tableau")
+
+# Lecture utilisateur
+taille = int(input("Saisir la taille du tableau : "))
+x = int(input("Saisir la valeur à chercher x : "))
+
+t = TypeTableau(taille, x)
+
+# Création et lancement du thread de génération
+thread_gen = threading.Thread(target=generer_tableau, args=(t,))
+thread_gen.start()
+thread_gen.join()  # attendre que le tableau soit généré
+
+# Création et lancement du thread de recherche
+thread_cherche = threading.Thread(target=chercher_x, args=(t,))
+thread_cherche.start()
+thread_cherche.join()
+
+5.4
+import threading
+import random
+
+T1 = []
+T2 = []
+annule = False
+
+def generer_tableau(tab, taille):
+    for _ in range(taille):
+        tab.append(random.randint(0,99))
+
+def inclusion():
+    if annule:
+        print("Programme annulé par l'utilisateur")
+        return
+    for elem in T1:
+        if elem not in T2:
+            print("T1 n'est pas inclus dans T2")
+            return
+    print("T1 est inclus dans T2")
+
+def surveiller_annulation():
+    global annule
+    c = input("Appuyez sur A pour annuler : ")
+    if c.upper() == 'A':
+        annule = True
+
+# Création et lancement des threads de génération
+t1_gen = threading.Thread(target=generer_tableau, args=(T1,5))
+t2_gen = threading.Thread(target=generer_tableau, args=(T2,10))
+t1_gen.start()
+t2_gen.start()
+t1_gen.join()
+t2_gen.join()
+
+# Lancement des threads de vérification et d'annulation
+t_incl = threading.Thread(target=inclusion)
+t_ann = threading.Thread(target=surveiller_annulation)
+t_incl.start()
+t_ann.start()
+t_incl.join()
+t_ann.join()
+
+5.5
+import threading
+import time
+import random
+import sys
+
+compt = 0
+mutex = threading.Lock()  # Mutex pour protéger l'accès
+limite = int(sys.argv[1])  # Valeur limite depuis ligne de commande
+
+def incrementer():
+    global compt
+    while True:
+        with mutex:  # Début section critique
+            if compt >= limite:
+                break
+            compt += 1
+        time.sleep(random.randint(1,5))  # Attend 1 à 5 secondes
+
+def afficher():
+    while True:
+        with mutex:
+            if compt >= limite:
+                break
+            print("Compteur =", compt)
+        time.sleep(2)  # Affiche toutes les 2 secondes
+
+# Création des threads
+t_inc = threading.Thread(target=incrementer)
+t_aff = threading.Thread(target=afficher)
+t_inc.start()
+t_aff.start()
+t_inc.join()
+t_aff.join()
+
+5.6
+import threading, time, random
+
+N = 100
+tableau = [random.randint(0,100) for _ in range(N)]
+tableau[0] = tableau[-1] = 0
+
+mutex = threading.Lock()
+
+def calcul_moyenne():
+    for i in range(1, N-1):
+        with mutex:  # section critique
+            tableau[i] = (tableau[i-1] + tableau[i] + tableau[i+1])/3
+        time.sleep(random.randint(1,3))
+
+def affichage():
+    while True:
+        with mutex:
+            print(["%.2f"%x for x in tableau])
+        time.sleep(4)
+
+t1 = threading.Thread(target=calcul_moyenne)
+t2 = threading.Thread(target=affichage)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.do_run = False  # On peut créer un flag pour stopper le thread si besoin
+# t2.join() # Optionnel si on a un flag
+
+5.7
+import threading, time, random
+
+u = 1
+compteur = 0
+mutex = threading.Lock()
+
+def f1():
+    global u, compteur
+    while compteur < 10:
+        with mutex:
+            compteur += 1
+            u = (u-1)**2/4
+            print(f"T1 -> u={u:.2f}, compteur={compteur}")
+        time.sleep(random.randint(1,5))
+
+def f2():
+    global u, compteur
+    while compteur < 10:
+        with mutex:
+            compteur += 1
+            u = (u-2)**2/6
+            print(f"T2 -> u={u:.2f}, compteur={compteur}")
+        time.sleep(random.randint(1,5))
+
+t1 = threading.Thread(target=f1)
+t2 = threading.Thread(target=f2)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+5.8
+import threading
+import time
+import random
+
+sem1 = threading.Semaphore(0)
+sem2 = threading.Semaphore(0)
+
+def T1():
+    for i in range(10):
+        print(f"T1 : traitement iteration {i+1}")
+        time.sleep(2)
+        sem1.release()  # signal T1 fini
+        sem2.acquire()  # attend T2
+
+def T2():
+    for i in range(10):
+        sem1.acquire()  # attend T1
+        t = random.randint(4,9)
+        print(f"T2 : traitement iteration {i+1} pendant {t} sec")
+        time.sleep(t)
+        sem2.release()  # signal T2 fini
+
+t1 = threading.Thread(target=T1)
+t2 = threading.Thread(target=T2)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+5.9
+import threading
+import time
+import random
+
+octet = None
+ready = False
+mutex = threading.Lock()
+cond = threading.Condition(mutex)
+
+def emetteur():
+    global octet, ready
+    for _ in range(10):
+        time.sleep(random.randint(1,3))
+        with cond:
+            while ready:
+                cond.wait()
+            octet = random.randint(0,255)
+            ready = True
+            print(f"Émetteur : octet {octet} envoyé")
+            cond.notify()
+
+def recepteur():
+    global octet, ready
+    for _ in range(10):
+        with cond:
+            while not ready:
+                cond.wait()
+            print(f"Récepteur : octet {octet} reçu")
+            ready = False
+            cond.notify()
+
+t1 = threading.Thread(target=emetteur)
+t2 = threading.Thread(target=recepteur)
+
+t1.start()
+t2.start()
+t1.join()
+t2.join()
+
+5.10
+import threading
+import time
+import random
+
+BUFFER_SIZE = 10
+buffer = []  # tampon partagé
+mutex = threading.Lock()           # mutex pour protéger le buffer
+full = threading.Semaphore(0)      # nombre d'éléments disponibles
+empty = threading.Semaphore(BUFFER_SIZE)  # nombre de places libres
+
+
+def producer(id):
+    while True:
+        item = random.randint(0, 255)      # produire un octet aléatoire
+        empty.acquire()                     # attendre qu'il y ait une place libre
+        with mutex:                         # début section critique
+            buffer.append(item)             # ajouter l'élément
+            print(f"Producteur {id} produit {item}, taille buffer={len(buffer)}")
+        full.release()                      # signaler qu'un élément est disponible
+        time.sleep(random.randint(1,3))     # pause aléatoire
+
+
+def consumer(id):
+    while True:
+        full.acquire()                      # attendre qu'un élément soit disponible
+        with mutex:                         # début section critique
+            item = buffer.pop()             # retirer l'élément
+            print(f"Consommateur {id} consomme {item}, taille buffer={len(buffer)}")
+        empty.release()                     # signaler qu'une place est libre
+        time.sleep(random.randint(1,3))     # pause aléatoire
+
+N_PRODUCERS = 2
+N_CONSUMERS = 2
+
+# Création des threads producteurs
+for i in range(N_PRODUCERS):
+    t = threading.Thread(target=producer, args=(i,), daemon=True)
+    t.start()
+
+# Création des threads consommateurs
+for i in range(N_CONSUMERS):
+    t = threading.Thread(target=consumer, args=(i,), daemon=True)
+    t.start()
+
+# Garder le programme vivant
+while True:
+    time.sleep(1)
+
+5.11
+import threading
+import time
+import random
+
+
+SIZE = 15
+data = [0] * SIZE
+read_count = 0
+
+mutex = threading.Lock()  # protège read_count
+wrt = threading.Lock()    # accès exclusif pour écrivains
+
+def reader(id):
+    global read_count
+
+    while True:
+        # début section critique
+        with mutex:
+            read_count += 1
+            if read_count == 1:
+                wrt.acquire()  # premier lecteur bloque écrivains
+
+        # lecture
+        i = random.randint(0, SIZE-1)
+        print(f"Lecteur {id} lit data[{i}] = {data[i]}")
+        time.sleep(random.randint(1,3))
+
+        # fin lecture
+        with mutex:
+            read_count -= 1
+            if read_count == 0:
+                wrt.release()  # dernier lecteur libère écrivains
+
+def writer(id):
+    while True:
+        wrt.acquire()  # accès exclusif
+
+        i = random.randint(0, SIZE-1)
+        data[i] = random.randint(0, 100)
+        print(f"Écrivain {id} écrit data[{i}] = {data[i]}")
+
+        wrt.release()
+        time.sleep(random.randint(1,5))
+
+N = 3  # lecteurs
+M = 2  # écrivains
+
+for i in range(N):
+    threading.Thread(target=reader, args=(i,), daemon=True).start()
+
+for i in range(M):
+    threading.Thread(target=writer, args=(i,), daemon=True).start()
+
+while True:
+    time.sleep(1)
+
+Exercice 6 : Gestion des Disques 
+6.2
+import os   # pour parcourir les dossiers et fichiers
+import sys  # pour récupérer les arguments
+
+# Vérifier que l'utilisateur fournit un répertoire
+if len(sys.argv) != 2:
+    print(f"Usage : {sys.argv[0]} <répertoire>")
+    sys.exit(1)
+
+dossier = sys.argv[1]
+
+# Parcourir tous les fichiers du répertoire
+for nom_fichier in os.listdir(dossier):
+    chemin_complet = os.path.join(dossier, nom_fichier)  # chemin complet
+    
+    # Vérifier que c'est bien un fichier (ignorer les dossiers)
+    if os.path.isfile(chemin_complet):
+        taille = os.path.getsize(chemin_complet)  # taille en octets
+        uid = os.stat(chemin_complet).st_uid     # propriétaire (UID)
+        
+        # Afficher uniquement les fichiers > 1 Mo
+        if taille > 1024*1024:
+            print(f"Fichier : {nom_fichier}, UID={uid}, taille={taille} octets")
+
+6.3
+import struct
+import os
+
+# Saisie du tableau
+n = int(input("Nombre d'entiers : "))
+tab = []
+for i in range(n):
+    x = int(input(f"Entier {i} : "))
+    tab.append(x)
+
+# Sauvegarde binaire
+with open("tab.bin", "wb") as f:
+    for x in tab:
+        f.write(struct.pack('i', x))  # 'i' = entier 4 octets
+
+# Modifier permissions : propriétaire par défaut, groupe écriture, autres lecture
+os.chmod("tab.bin", 0o624)
+
+print("Tableau sauvegardé dans tab.bin")
+
+import struct
+import os
+
+tab = []
+
+with open("tab.bin", "rb") as f:
+    while True:
+        bytes_read = f.read(4)  # lire 4 octets (int)
+        if not bytes_read:
+            break
+        x = struct.unpack('i', bytes_read)[0]
+        tab.append(x)
+
+print(f"Tableau chargé ({len(tab)} entiers) : {tab}")
+
+Exercice 7: Signaux 
+7.1
+import os
+import signal
+import time
+
+pid = os.fork()
+
+if pid == 0:
+    # Fils : calcul infini
+    x = 0
+    while True:
+        x += 1
+else:
+    # Père : menu
+    while True:
+        choix = input("Menu : s=stop, r=resume, q=quit\n")
+        if choix == 's':
+            os.kill(pid, signal.SIGSTOP)
+        elif choix == 'r':
+            os.kill(pid, signal.SIGCONT)
+        elif choix == 'q':
+            os.kill(pid, signal.SIGKILL)
+            break
+
+7.2 
+saisit: 
+import os
+import signal
+
+# PID du programme affiche.py
+pid_affiche = int(input("Entrez le PID du programme affiche.py : "))
+
+# Saisie de l'entier
+n = int(input("Entrez un entier : "))
+
+# Écriture dans un fichier temporaire
+with open("/tmp/entier.txt", "w") as f:
+    f.write(str(n))
+
+# Envoi du signal SIGUSR1 au programme affiche.py
+os.kill(pid_affiche, signal.SIGUSR1)
+print(f"Signal envoyé au processus {pid_affiche}")
+
+affiche: 
+import signal
+import time
+
+def handler(sig, frame):
+    # Signal reçu : lire le fichier et afficher la valeur
+    with open("/tmp/entier.txt", "r") as f:
+        n = int(f.read().strip())
+    print(f"Valeur reçue : {n}")
+
+# Associer le signal SIGUSR1 au handler
+signal.signal(signal.SIGUSR1, handler)
+
+print(f"PID de ce programme : {os.getpid()}")
+print("En attente du signal...")
+
+# Boucle infinie pour attendre le signal
+while True:
+    signal.pause()  # pause jusqu'à la réception d'un signal
+
+7.3
+import os
+import signal
+import time
+import sys
+
+N = 5  # Nombre de fils
+pids = []  # Liste pour stocker les PID des fils
+
+# Handler pour le signal SIGTERM dans le fils
+def child_handler(sig, frame):
+    print(f"Fils {os.getpid()} tué !")
+    sys.exit(0)
+
+# Création des processus fils
+for i in range(N):
+    pid = os.fork()
+    if pid == 0:  # Code du fils
+        signal.signal(signal.SIGTERM, child_handler)  # Attache le handler
+        while True:
+            time.sleep(1)  # Fils "travaille", mais pas en boucle CPU
+    else:
+        pids.append(pid)  # Stocke le PID du fils dans le père
+
+# Menu interactif côté père
+while True:
+    print("Menu : 1=endormir, 2=réveiller, 3=terminer, 4=quit")
+    choix = int(input("Choix : "))
+    if choix == 4:
+        break
+    fils = int(input(f"Numéro du fils (0-{N-1}) : "))
+    
+    if choix == 1:
+        os.kill(pids[fils], signal.SIGSTOP)  # Stop le fils
+    elif choix == 2:
+        os.kill(pids[fils], signal.SIGCONT)  # Continue le fils
+    elif choix == 3:
+        os.kill(pids[fils], signal.SIGTERM)  # Termine le fils
+
+7.4
+
+n = int(input("Nombre d'éléments : "))
+tab = [int(input(f"tab[{i}] = ")) for i in range(n)]
+
+while True:
+    i = int(input("Index à afficher : "))
+    if 0 <= i < n:
+        print(f"tab[{i}] = {tab[i]}")
+        break
+    else:
+        print("Erreur : index invalide !")
+
+Exercice 8 : Programmation Réseaux 
+8.1
+# serveur_ip.py
+import socket
+
+
+# Charger les IP autorisées
+def load_allowed_ips(filename):
+    allowed = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                ip, name = parts
+                allowed[ip] = name
+    return allowed
+
+host = '0.0.0.0'
+port = 5001
+allowed_ips = load_allowed_ips('add_autoris.txt')
+
+# Création serveur TCP
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((host, port))
+s.listen(5)
+print(f"Serveur lancé sur {host}:{port}")
+
+while True:
+    client, addr = s.accept()
+    ip_client = addr[0]
+    print(f"Connexion de {ip_client}")
+
+    if ip_client in allowed_ips:
+        # Client autorisé
+        name = allowed_ips[ip_client]
+        client.send(f"Bienvenue {name} !\n".encode())
+        print(f"Client {name} connecté")
+    else:
+        # Client refusé
+        client.send("Accès refusé.\n")
+        print(f"Client {ip_client} non autorisé")
+        client.close()
+
+8.2
+import socket
+
+# Charger IP autorisées et noms
+clients = {}
+with open("add_autoris.txt") as f:
+    for ligne in f:
+        ip, nom = ligne.strip().split()
+        clients[ip] = nom
+
+HOST = '0.0.0.0'
+PORT = 12346
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    print(f"Serveur en écoute sur {PORT}")
+    conn, addr = s.accept()
+    with conn:
+        ip_client = addr[0]
+        if ip_client in clients:
+            msg = f"Bienvenue {clients[ip_client]} !\n"
+            conn.sendall(msg.encode())
+            print(f"Client {ip_client} connecté et autorisé")
+        else:
+            msg = "Vous n'êtes pas autorisé !\n"
+            conn.sendall(msg.encode())
+            print(f"Client {ip_client} refusé")
+            conn.close()
+
+8.3 
+Serveur : 
+import socket
+import os
+import time
+
+HOST = '0.0.0.0'
+PORT = 12347
+SAVE_DIR = '/home/save/'
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    print(f"Serveur en écoute sur le port {PORT}")
+    conn, addr = s.accept()
+    with conn:
+        ip_client = addr[0]
+        t = time.localtime()
+        filename = f"{SAVE_DIR}{ip_client}_{t.tm_year}_{t.tm_mon:02}_{t.tm_mday:02}.txt"
+        with open(filename,"wb") as f:
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    break
+                f.write(data)
+        print(f"Fichier reçu et sauvegardé dans {filename}")
+
+Client : 
+import socket
+import sys
+
+if len(sys.argv)!=2:
+    print("Usage: python client.py <fichier_local>")
+    sys.exit(1)
+
+HOST = '127.0.0.1'
+PORT = 12347
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    with open(sys.argv[1], "rb") as f:
+        s.sendall(f.read())
+
+print("Fichier envoyé avec succès.")
+
+8.4
+Serveur : 
+# serveur8.4.py
+import socket
+import os
+
+HOST = '0.0.0.0'
+PORT = 12347
+rep_serveur = "/chemin/vers/le/repertoire/serveur"
+
+os.makedirs(rep_serveur, exist_ok=True)
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    print(f"Serveur en écoute sur {PORT}...")
+
+    conn, addr = s.accept()
+    with conn:
+        print(f"Client connecté : {addr[0]}")
+        # Sauvegarder archive reçue
+        archive = os.path.join(rep_serveur, "rep.tgz")
+        with open(archive, "wb") as f:
+            while True:
+                data = conn.recv(4096)
+                if not data:
+                    break
+                f.write(data)
+
+        # Décompresser l'archive et supprimer le fichier
+        os.system(f"cd {rep_serveur} && tar zxvf rep.tgz && rm rep.tgz")
+        print("Archive décompressée sur le serveur.")
+
+Client:
+# client8.4.py
+import socket
+import os
+
+HOST = '127.0.0.1'
+PORT = 12347
+
+# Chemin vers le répertoire client
+rep_client = "/chemin/vers/le/repertoire/client"
+archive = "/tmp/rep.tgz"
+
+# Créer une archive tar.gz du répertoire
+os.system(f"tar zcvf {archive} {rep_client}")
+
+# Envoyer l'archive au serveur
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    with open(archive, "rb") as f:
+        data = f.read()
+        s.sendall(data)
+
+print("Archive envoyée !")
+
+8.5 
+Serveur : 
+import socket
+import threading
+
+PORT = 12348
+BUFFER = 1024
+
+clients = []
+pairs = {}
+lock = threading.Lock()
+
+def handle_client(conn, idx):
+    while True:
+        try:
+            data = conn.recv(BUFFER)
+            if not data:
+                break
+            # envoyer au partenaire
+            with lock:
+                if idx in pairs:
+                    partner = pairs[idx]
+                    partner.sendall(data)
+        except:
+            break
+    conn.close()
+    with lock:
+        if idx in pairs:
+            del pairs[idx]
+        clients[idx] = None
+    print(f"Client {idx} déconnecté")
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('0.0.0.0', PORT))
+s.listen()
+print(f"Serveur en écoute sur {PORT}")
+
+while True:
+    conn, addr = s.accept()
+    with lock:
+        idx = len(clients)
+        clients.append(conn)
+        # Relier les paires
+        for i, c in enumerate(clients[:-1]):
+            if c is not None and i not in pairs:
+                pairs[i] = conn
+                pairs[idx] = c
+                break
+    threading.Thread(target=handle_client, args=(conn, idx)).start()
+
+Client:
+import socket
+import threading
+
+PORT = 12348
+BUFFER = 1024
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('127.0.0.1', PORT))
+
+def recv_thread():
+    while True:
+        data = s.recv(BUFFER)
+        if data:
+            print("L'autre client dit :", data.decode())
+
+threading.Thread(target=recv_thread, daemon=True).start()
+
+while True:
+    msg = input("Saisissez votre message : ")
+    s.send(msg.encode())
+
+8.6
+Serveur : 
+import socket
+import threading
+
+PORT = 12349
+BUFFER = 1024
+
+clients = []
+lock = threading.Lock()  # mutex pour gérer les clients et l'envoi
+
+def broadcast(msg, sender):
+    with lock:
+        for c in clients:
+            if c != sender:
+                c.send(msg)
+
+def handle_client(conn):
+    while True:
+        try:
+            data = conn.recv(BUFFER)
+            if not data:
+                break
+            msg = b"Client: " + data
+            broadcast(msg, conn)
+        except:
+            break
+    with lock:
+        clients.remove(conn)
+    conn.close()
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('0.0.0.0', PORT))
+s.listen()
+print(f"Serveur forum de chat en écoute sur {PORT}")
+
+while True:
+    conn, addr = s.accept()
+    with lock:
+        clients.append(conn)
+    threading.Thread(target=handle_client, args=(conn,), daemon=True).start()
+
+Client :
+import socket
+import threading
+
+PORT = 12349
+BUFFER = 1024
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('127.0.0.1', PORT))
+
+def recv_thread():
+    while True:
+        data = s.recv(BUFFER)
+        if data:
+            print(data.decode(), end='')
+
+threading.Thread(target=recv_thread, daemon=True).start()
+
+while True:
+    msg = input()
+    s.send(msg.encode())
+
